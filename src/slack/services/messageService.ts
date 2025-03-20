@@ -61,7 +61,9 @@ export async function scheduleRecurringMessages(
         startDate.setDate(startDate.getDate() + 7);
       } else if (recurrence === "daily") {
         startDate.setDate(startDate.getDate() + 1);
-      } else {
+      } else if (recurrence === "once") {
+        break;
+      }else {
         console.error("Invalid recurrence type:", recurrence);
         return;
       }
