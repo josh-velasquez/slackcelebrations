@@ -10,30 +10,40 @@ export const setupSlackApp = () => {
     appToken: process.env.APP_TOKEN || "",
   });
 
-  slackApp.command("/birthday", async ({ command, ack, say }) => {
+  slackApp.command("/birthday", async ({ command, ack}) => {
     // the command argument contains the text that the user entered after the command 
     // e.g /birthday @Josh 10-10 will give command.text = <@U07RL8L14R2|josh.velasquez> 10-10, the left number is the user id
     try {
       await ack("Your event has been registered, we will announce it on the day! 🎉");
+      const match = command.text.match(/<@([A-Z0-9]+)\|[^>]+>\s+(\d{2}-\d{2})/);
+    
+      if (!match) {
+        console.error("Invalid format. Expected: /birthday @user MM-DD");
+        return;
+      }
+
+      const userId = match[1]; // Extracted user ID
+      const date = match[2];   // Extracted date (MM-DD)
+      scheduleBirthday(userId, date)
     } catch (error) {
       console.error("Error handling message event:", error);
     }
   });
-  slackApp.command("/work-anniversary", async ({ command, ack, say }) => {
+  slackApp.command("/work-anniversary", async ({ command, ack}) => {
     try {
       await ack("Your event has been registered, we will announce it on the day! 🎉");
     } catch (error) {
       console.error("Error handling message event:", error);
     }
   });
-  slackApp.command("/custom-celebration", async ({ command, ack, say }) => {
+  slackApp.command("/custom-celebration", async ({ command, ack}) => {
     try {
       await ack("Your event has been registered, we will announce it on the day! 🎉");
     } catch (error) {
       console.error("Error handling message event:", error);
     }
   });
-  slackApp.command("/help", async ({ command, ack, say }) => {
+  slackApp.command("/help", async ({ command, ack}) => {
     const helpMessage = `👋 *Hello <@${command.user_id}>! Here's what I can do:*\n
     🎂 *\`/birthday [@user] [MM-DD]\`*  
     → Registers a user's birthday. I'll send a celebration message every year on that date! 🎉  
@@ -62,6 +72,23 @@ export const setupSlackApp = () => {
       console.error("Error handling message event:", error);
     }
   });
+
+  async function scheduleBirthday (userId: string, date: string) {
+    const [month, day] = date.split("-");
+    const today = new Date();
+    const birthdayDate = new Date(today.getFullYear(), parseInt(month) - 1, parseInt(day), 14);
+    if (birthdayDate < today) {
+      birthdayDate.setFullYear(today.getFullYear() + 1);
+    }
+    const time = birthdayDate.getTime();
+    const job = await slackApp.client.chat.scheduleMessage({
+      token: process.env.SLACK_BOT_TOKEN,
+      channel: process.env.SLACK_CHANNEL_ID || "",
+      post_at: time / 1000,
+      text: `🎉🎂 *Happy Birthday <@${userId}>!* 🎂🎉\n🎈Wishing you a fantastic day! 🎁`,
+    });
+    console.log("Scheduled birthday message:", job);
+  }
 
   return slackApp;
 };
