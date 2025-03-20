@@ -105,31 +105,25 @@ export const setupSlackApp = () => {
     const [month, day] = date.split("-").map(Number);
     const today = new Date();
     const startYear = today.getFullYear();
-    const maxFutureDays = 120; // Slack limit, we can only schedule messages up to 120 days in the future
+    const maxFutureDate = new Date(today.getTime() + 120 * 24 * 60 * 60 * 1000); // 120 days from today
     let eventsToSchedule = [];
   
     let startDate = new Date(startYear, month - 1, day, 10); // Set the first event
     if (startDate < today) {
       startDate.setFullYear(startYear + 1);
     }
+    
+    while (startDate <= maxFutureDate) {
+      eventsToSchedule.push(new Date(startDate));
   
-    while (eventsToSchedule.length < 10) { // Schedule multiple occurrences in chunks of 120 days
       if (recurrence === "yearly") {
-        eventsToSchedule.push(new Date(startDate));
         startDate.setFullYear(startDate.getFullYear() + 1);
       } else if (recurrence === "monthly") {
-        eventsToSchedule.push(new Date(startDate));
         startDate.setMonth(startDate.getMonth() + 1);
       } else if (recurrence === "weekly") {
-        for (let i = 0; i < Math.floor(maxFutureDays / 7); i++) {
-          eventsToSchedule.push(new Date(startDate));
-          startDate.setDate(startDate.getDate() + 7);
-        }
+        startDate.setDate(startDate.getDate() + 7);
       } else if (recurrence === "daily") {
-        for (let i = 0; i < maxFutureDays; i++) {
-          eventsToSchedule.push(new Date(startDate));
-          startDate.setDate(startDate.getDate() + 1);
-        }
+        startDate.setDate(startDate.getDate() + 1);
       } else {
         console.error("Invalid recurrence type:", recurrence);
         return;
@@ -137,14 +131,17 @@ export const setupSlackApp = () => {
     }
   
     for (const eventDate of eventsToSchedule) {
-      if (eventDate < today) continue;
       const time = Math.floor(eventDate.getTime() / 1000);
-      await slackApp.client.chat.scheduleMessage({
-        token: process.env.SLACK_BOT_TOKEN,
-        channel: process.env.SLACK_CHANNEL_ID || "",
-        post_at: time,
-        text: message,
-      });
+      try {
+        await slackApp.client.chat.scheduleMessage({
+          token: process.env.SLACK_BOT_TOKEN,
+          channel: process.env.SLACK_CHANNEL_ID || "",
+          post_at: time,
+          text: message,
+        });
+      } catch (error) {
+        console.error("Error scheduling message:", error);
+      }
     }
   
     console.log("Scheduled events:", eventsToSchedule);
