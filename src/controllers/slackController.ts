@@ -18,5 +18,15 @@ export const setupSlackApp = () => {
     }
   });
 
+  slackApp.command("/birthday", async ({ command, ack, say }) => {
+    // the command argument contains the text that the user entered after the command 
+    // e.g /birthday @Josh 10-10 will give command.text = <@U07RL8L14R2|josh.velasquez> 10-10, the left number is the user id
+    try {
+      await ack("Your event has been registered, we will announce it on the day!");
+    } catch (error) {
+      console.error("Error handling message event:", error);
+    }
+  });
+
   return slackApp;
 };
