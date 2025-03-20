@@ -1,8 +1,9 @@
 import express from "express";
-import { getWelcomeMessage } from "../controllers/helloWorldController";
 
 const mainRouter = express.Router();
 
-mainRouter.get("/", getWelcomeMessage);
+mainRouter.get("/", (_, res) => {
+  res.send("Welcome to Slack Celebrations!");
+});
 
 export { mainRouter };

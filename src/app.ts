@@ -1,16 +1,22 @@
 import express from "express";
 import { mainRouter } from "./routes";
 import dotenv from "dotenv";
-import { setupSlackApp } from "./controllers/slackController";
-import { startSlackApp } from "./services/slackService";
+import { setupSlackApp, startSlackApp } from "./slack/app";
 
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 4343;
 
-const slackApp = setupSlackApp();
-startSlackApp(slackApp);
+const main = async () => {
+  const slackApp = setupSlackApp();
+  await startSlackApp(slackApp);
+};
+
+main().catch((error) => {
+  console.error("Error starting the application:", error);
+  process.exit(1);
+});
 
 app.use("/", mainRouter);
 
