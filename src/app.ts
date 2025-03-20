@@ -20,6 +20,15 @@ const app = new App({
   appToken: APP_TOKEN, 
 });
 
+// Message event listener
+app.message("hey", async ({ message, say }) => {
+  try {
+    await say("Yaaay! that command works!");
+  } catch (error) {
+    console.error("Error handling message event:", error);
+  }
+});
+
 (async () => {
   const port = process.env.PORT ? parseInt(process.env.PORT) : 3000;
 
