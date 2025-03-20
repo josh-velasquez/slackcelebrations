@@ -2,13 +2,15 @@
   "compilerOptions": {
     "module": "ESNext",
     "esModuleInterop": true,
-    "target": "es6",
+    "target": "ESNext",
     "moduleResolution": "node",
+    "strict": true,
     "sourceMap": true,
-    "outDir": "dist",
-    "rootDir": "./src", 
+    "skipLibCheck": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "resolveJsonModule": true
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules"],
-  "lib": ["es2015"]
+  "exclude": ["node_modules"]
 }
