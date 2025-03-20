@@ -11,38 +11,66 @@ export const setupSlackApp = () => {
   });
 
   slackApp.command("/birthday", async ({ command, ack}) => {
-    // the command argument contains the text that the user entered after the command 
-    // e.g /birthday @Josh 10-10 will give command.text = <@U07RL8L14R2|josh.velasquez> 10-10, the left number is the user id
     try {
-      await ack("Your event has been registered, we will announce it on the day! 🎉");
       const match = command.text.match(/<@([A-Z0-9]+)\|[^>]+>\s+(\d{2}-\d{2})/);
-    
       if (!match) {
         console.error("Invalid format. Expected: /birthday @user MM-DD");
         return;
       }
+      const userId = match[1];
+      const date = match[2];
+      const message = `🎉🎂 *Happy Birthday <@${userId}>!* 🎂🎉\n🎈Wishing you a fantastic day! 🎁`
 
-      const userId = match[1]; // Extracted user ID
-      const date = match[2];   // Extracted date (MM-DD)
-      scheduleBirthday(userId, date)
+      await scheduleMessage(date, message)
+      await ack("Your event has been registered, we will announce it on the day! 🎉");
     } catch (error) {
       console.error("Error handling message event:", error);
     }
   });
+
   slackApp.command("/work-anniversary", async ({ command, ack}) => {
     try {
+      const match = command.text.match(/<@([A-Z0-9]+)\|[^>]+>\s+(\d{4}-\d{2}-\d{2})/);
+      if (!match) {
+        console.error("Invalid format. Expected: /work-anniversary @user YYYY-MM-DD");
+        return;
+      }
+      const userId = match[1];
+      const date = match[2];
+      const MMDD = date.split("-").slice(1).join("-");
+      const year = date.split("-")[0];
+      const currentYear = new Date().getFullYear();
+      const years = currentYear - parseInt(year);
+      const message = `🎉🎈 *Happy Work Anniversary <@${userId}>!* 🎈🎉\n🎉 Congratulations on ${years} years with us! 🎁`
+
+      await scheduleMessage(MMDD, message)
       await ack("Your event has been registered, we will announce it on the day! 🎉");
     } catch (error) {
       console.error("Error handling message event:", error);
     }
   });
+
   slackApp.command("/custom-celebration", async ({ command, ack}) => {
     try {
+      const match = command.text.match(/<@([A-Z0-9]+)\|[^>]+>\s+(\d{2}-\d{2})\s+(\w+)\s+(.+)/);
+      if (!match) {
+        console.error("Invalid format. Expected: /custom-celebration @user MM-DD recurrence description");
+        return;
+      }
+      
+      const userId = match[1];
+      const date = match[2];
+      const recurrence = match[3].toLowerCase(); // e.g., "yearly", "monthly"
+      const description = match[4];
+      const message = `🎉 *${description} for <@${userId}>!* 🎉\nLet's celebrate this special day! 🎁`;
+
+      await scheduleRecurringMessages(date, message, recurrence);
       await ack("Your event has been registered, we will announce it on the day! 🎉");
     } catch (error) {
       console.error("Error handling message event:", error);
     }
   });
+  
   slackApp.command("/help", async ({ command, ack}) => {
     const helpMessage = `👋 *Hello <@${command.user_id}>! Here's what I can do:*\n
     🎂 *\`/birthday [@user] [MM-DD]\`*  
@@ -73,21 +101,71 @@ export const setupSlackApp = () => {
     }
   });
 
-  async function scheduleBirthday (userId: string, date: string) {
+  async function scheduleRecurringMessages(date: string, message: string, recurrence: string) {
+    const [month, day] = date.split("-").map(Number);
+    const today = new Date();
+    const startYear = today.getFullYear();
+    const maxFutureDays = 120; // Slack limit, we can only schedule messages up to 120 days in the future
+    let eventsToSchedule = [];
+  
+    let startDate = new Date(startYear, month - 1, day, 10); // Set the first event
+    if (startDate < today) {
+      startDate.setFullYear(startYear + 1);
+    }
+  
+    while (eventsToSchedule.length < 10) { // Schedule multiple occurrences in chunks of 120 days
+      if (recurrence === "yearly") {
+        eventsToSchedule.push(new Date(startDate));
+        startDate.setFullYear(startDate.getFullYear() + 1);
+      } else if (recurrence === "monthly") {
+        eventsToSchedule.push(new Date(startDate));
+        startDate.setMonth(startDate.getMonth() + 1);
+      } else if (recurrence === "weekly") {
+        for (let i = 0; i < Math.floor(maxFutureDays / 7); i++) {
+          eventsToSchedule.push(new Date(startDate));
+          startDate.setDate(startDate.getDate() + 7);
+        }
+      } else if (recurrence === "daily") {
+        for (let i = 0; i < maxFutureDays; i++) {
+          eventsToSchedule.push(new Date(startDate));
+          startDate.setDate(startDate.getDate() + 1);
+        }
+      } else {
+        console.error("Invalid recurrence type:", recurrence);
+        return;
+      }
+    }
+  
+    for (const eventDate of eventsToSchedule) {
+      if (eventDate < today) continue;
+      const time = Math.floor(eventDate.getTime() / 1000);
+      await slackApp.client.chat.scheduleMessage({
+        token: process.env.SLACK_BOT_TOKEN,
+        channel: process.env.SLACK_CHANNEL_ID || "",
+        post_at: time,
+        text: message,
+      });
+    }
+  
+    console.log("Scheduled events:", eventsToSchedule);
+  }
+  
+
+  async function scheduleMessage (date: string, message: string) {
     const [month, day] = date.split("-");
     const today = new Date();
-    const birthdayDate = new Date(today.getFullYear(), parseInt(month) - 1, parseInt(day), 14);
-    if (birthdayDate < today) {
-      birthdayDate.setFullYear(today.getFullYear() + 1);
+    const eventDate = new Date(today.getFullYear(), parseInt(month) - 1, parseInt(day), 10);
+    if (eventDate < today) {
+      eventDate.setFullYear(today.getFullYear() + 1);
     }
-    const time = birthdayDate.getTime();
+    const time = eventDate.getTime();
     const job = await slackApp.client.chat.scheduleMessage({
       token: process.env.SLACK_BOT_TOKEN,
       channel: process.env.SLACK_CHANNEL_ID || "",
       post_at: time / 1000,
-      text: `🎉🎂 *Happy Birthday <@${userId}>!* 🎂🎉\n🎈Wishing you a fantastic day! 🎁`,
+      text: message,
     });
-    console.log("Scheduled birthday message:", job);
+    console.log("Scheduled message:", job);
   }
 
   return slackApp;
