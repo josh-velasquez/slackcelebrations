@@ -21,7 +21,7 @@ export const setupCustomCelebrationCommand = (slackApp: SlackBolt.App) => {
       // Create event in database
       const event: Event = {
         user_id: userId,
-        event_type: 'custom-celebration',
+        event_type: 'custom',
         recurrence,
         event_date: `${new Date().getFullYear()}-${date}`,
         description,

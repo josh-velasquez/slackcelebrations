@@ -1,5 +1,5 @@
-export type EventType = 'birthday' | 'work-anniversary' | 'custom-celebration';
-export type Recurrence = 'none' | 'yearly' | 'monthly' | 'weekly' | 'daily';
+export type EventType = 'birthday' | 'work-anniversary' | 'custom';
+export type Recurrence = 'once' | 'yearly' | 'monthly' | 'weekly' | 'daily';
 
 export interface Event {
   user_id: string;

@@ -20,7 +20,7 @@ export const setupHelpCommand = (slackApp: SlackBolt.App) => {
     *Additional Notes:*
     - For the \`[@user]\` parameter, you can mention them directly
        → Example: \`/birthday @UserJohn 10-10\`
-    - For the \`[recurrence]\` parameter, you can use the following keywords: \`yearly, monthly, weekly, daily\`
+    - For the \`[recurrence]\` parameter, you can use the following keywords: \`yearly, monthly, weekly, daily, once\`
     - For the \`[description]\` parameter, you can write a custom message to be displayed in the reminder\n
 
     Let me know if you need anything else! 🚀`;
