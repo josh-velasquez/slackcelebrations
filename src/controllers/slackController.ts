@@ -43,7 +43,7 @@ export const setupSlackApp = () => {
 
     🎁 *\`/custom-celebration [@user] [MM-DD] [recurrence] [description] \`*  
     → Create a custom recurring celebration for a user!  
-    *Example:* \`/custom-celebration @john 09-15 Hot Dog Day yearly\` will remind everyone every year on Sept 15! 🌭  
+    *Example:* \`/custom-celebration @john 09-15 yearly Hot Dog Day\` will remind everyone every year on Sept 15! 🌭  
 
     🆘 *\`/help\`*  
     → Shows this list of commands so you never forget what I can do! 🤖  
