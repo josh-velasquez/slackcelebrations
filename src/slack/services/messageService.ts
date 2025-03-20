@@ -1,5 +1,4 @@
 import SlackBolt from "@slack/bolt";
-import { Recurrence } from "../types/event";
 
 export async function scheduleMessage(date: string, message: string, slackApp: SlackBolt.App) {
   try {
