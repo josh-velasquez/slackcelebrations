@@ -29,7 +29,7 @@ export const setupCustomCelebrationCommand = (slackApp: SlackBolt.App) => {
       const description = match[4].trim();
 
       if (
-        !['yearly', 'monthly', 'weekly', 'daily', 'once'].includes(recurrence)
+        !["yearly", "monthly", "weekly", "daily", "once"].includes(recurrence)
       ) {
         await ack({
           response_type: "ephemeral",
@@ -38,12 +38,14 @@ export const setupCustomCelebrationCommand = (slackApp: SlackBolt.App) => {
         return;
       }
 
+      const postDate = `${new Date().getFullYear()}-${date}`;
+
       // Create event in database
       const event: Event = {
         user_id: userId,
-        event_type: 'custom',
+        event_type: "custom",
         recurrence,
-        event_date: `${new Date().getFullYear()}-${date}`,
+        event_date: postDate,
         description,
       };
 
@@ -52,17 +54,18 @@ export const setupCustomCelebrationCommand = (slackApp: SlackBolt.App) => {
         date,
         getCustomCelebrationMessage(userId, description),
         recurrence,
-        slackApp
+        slackApp,
+        "custom"
       );
       await ack({
         response_type: "ephemeral",
-        text: "✅ Your event has been registered, we will announce it on the day! 🎉"
+        text: "✅ Your event has been registered, we will announce it on the day! 🎉",
       });
     } catch (error) {
       console.error("Error handling message event:", error);
       await ack({
         response_type: "ephemeral",
-        text: "❌ An error occurred while processing your request. Please try again later."
+        text: "❌ An error occurred while processing your request. Please try again later.",
       });
     }
   });

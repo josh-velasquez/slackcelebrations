@@ -32,7 +32,7 @@ export const setupWorkAnniversaryCommand = (slackApp: SlackBolt.App) => {
       };
 
       await databaseService.createEvent(event);
-      await scheduleMessage(MMDD, getWorkAnniversaryMessage(userId, years), slackApp);
+      await scheduleMessage(MMDD, getWorkAnniversaryMessage(userId, years), slackApp, 'work-anniversary');
       await ack({
         response_type: "ephemeral",
         text: "✅ Your event has been registered, we will announce it on the day! 🎉"

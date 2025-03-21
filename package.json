@@ -6,7 +6,7 @@
   "scripts": {
     "start": "tsx dist/app.js",
     "build": "tsc",
-    "dev": "nodemon --watch 'src/**/*' --exec 'tsx' src/app.ts", 
+    "dev": "nodemon --watch 'src/**/*' --exec 'tsx' src/app.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
@@ -23,6 +23,7 @@
     "typescript": "^5.8.2"
   },
   "dependencies": {
+    "@giphy/js-fetch-api": "^5.6.0",
     "@slack/bolt": "^4.2.1",
     "esbuild": "^0.25.1",
     "express": "^4.21.2",
