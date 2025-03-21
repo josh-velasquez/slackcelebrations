@@ -61,6 +61,8 @@ export const eventSchedulerService = {
           if (event.recurrence === 'once') {
             await scheduleMessage(formattedDate, message, slackApp);
           } else {
+            // For recurring events, we only need to schedule future occurrences
+            // The initial date is already handled by the event creation
             await scheduleRecurringMessages(formattedDate, message, event.recurrence, slackApp);
           }
 

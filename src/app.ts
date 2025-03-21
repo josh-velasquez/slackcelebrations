@@ -9,7 +9,7 @@ const app = express();
 const port = process.env.PORT || 4343;
 
 const main = async () => {
-  const slackApp = setupSlackApp();
+  const slackApp = await setupSlackApp();
   await startSlackApp(slackApp);
 };
 

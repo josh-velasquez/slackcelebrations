@@ -50,6 +50,17 @@ export async function scheduleRecurringMessages(
       startDate.setFullYear(startYear + 1);
     }
 
+    // Skip the initial date since it's already handled by event creation
+    if (recurrence === "yearly") {
+      startDate.setFullYear(startDate.getFullYear() + 1);
+    } else if (recurrence === "monthly") {
+      startDate.setMonth(startDate.getMonth() + 1);
+    } else if (recurrence === "weekly") {
+      startDate.setDate(startDate.getDate() + 7);
+    } else if (recurrence === "daily") {
+      startDate.setDate(startDate.getDate() + 1);
+    }
+
     while (startDate <= maxFutureDate) {
       eventsToSchedule.push(new Date(startDate));
 
@@ -63,7 +74,7 @@ export async function scheduleRecurringMessages(
         startDate.setDate(startDate.getDate() + 1);
       } else if (recurrence === "once") {
         break;
-      }else {
+      } else {
         console.error("Invalid recurrence type:", recurrence);
         return;
       }
