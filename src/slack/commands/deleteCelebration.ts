@@ -1,7 +1,7 @@
 import SlackBolt from "@slack/bolt";
 import { deleteScheduledMessages, scheduleMessage } from "../services/messageService";
 import { databaseService } from "../services/databaseService";
-import { Event, EventType, Recurrence } from "../types/event";
+import { EventType, Recurrence } from "../types/eventsUtil";
 
 export const setupDeleteCelebrationCommand = (slackApp: SlackBolt.App) => {
   slackApp.command("/delete-celebration", async ({ command, ack }) => {

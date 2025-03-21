@@ -12,7 +12,7 @@ export const setupWorkAnniversaryCommand = (slackApp: SlackBolt.App) => {
       if (!match) {
         await ack({
           response_type: "ephemeral",
-          text: "❌ Invalid format. Expected: /custom-celebration @user MM-DD recurrence description",
+          text: "❌ Invalid format. Expected: /work-anniversary @user YYYY-MM-DD",
         });
         return;
       }

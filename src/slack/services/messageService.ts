@@ -1,5 +1,5 @@
 import SlackBolt from "@slack/bolt";
-import { EventType, Recurrence } from "../types/event";
+import { EventType, Recurrence } from "../types/eventsUtil";
 
 export async function scheduleMessage(date: string, message: string, slackApp: SlackBolt.App) {
   try {
@@ -90,9 +90,6 @@ export async function scheduleRecurringMessages(
         throw error;
       }
     }
-
-    const result = await slackApp.client.chat.scheduledMessages.list()
-    console.log("Scheduled messages:", result);
   } catch (error) {
     console.error("Error in scheduleRecurringMessages:", error);
     throw error;
@@ -111,6 +108,8 @@ export async function deleteScheduledMessages(date: string, userId: string, even
     const result = await slackApp.client.chat.scheduledMessages.list({
       token: process.env.SLACK_BOT_TOKEN,
     });
+
+    console.log("Scheduled messages:", result);
 
     if (!result.scheduled_messages || result.scheduled_messages.length === 0) {
       console.log("No scheduled messages found.");
