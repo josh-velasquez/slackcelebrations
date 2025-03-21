@@ -8,7 +8,7 @@ export const getBirthdayMessage = (userId: string) => `🎉🎂 *Happy Birthday 
 export const setupBirthdayCommand = (slackApp: SlackBolt.App) => {
   slackApp.command("/birthday", async ({ command, ack }) => {
     try {
-      const match = command.text.match(/<@([A-Z0-9]+)>\s+(\d{4}-\d{2}-\d{2})/);
+      const match = command.text.match(/<@([A-Z0-9]+)\|[^>]+>\s+(\d{2}-\d{2})/);
       if (!match) {
         await ack({
           response_type: "ephemeral",
