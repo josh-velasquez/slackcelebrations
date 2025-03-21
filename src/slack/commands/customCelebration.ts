@@ -1,7 +1,7 @@
 import SlackBolt from "@slack/bolt";
 import { scheduleRecurringMessages } from "../services/messageService";
 import { databaseService } from "../services/databaseService";
-import { Event, Recurrence } from "../types/event";
+import { Event, Recurrence } from "../types/eventsUtil";
 
 export const getCustomCelebrationMessage = (
   userId: string,

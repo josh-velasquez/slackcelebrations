@@ -1,7 +1,7 @@
 import SlackBolt from "@slack/bolt";
 import { scheduleMessage } from "../services/messageService";
 import { databaseService } from "../services/databaseService";
-import { Event } from "../types/event";
+import { Event } from "../types/eventsUtil";
 
 export const getBirthdayMessage = (userId: string) => `🎉🎂 *Happy Birthday <@${userId}>!* 🎂🎉\n🎈Wishing you a fantastic day! 🎁`;
 

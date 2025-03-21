@@ -1,7 +1,7 @@
 import SlackBolt from "@slack/bolt";
 import { scheduleMessage } from "../services/messageService";
 import { databaseService } from "../services/databaseService";
-import { Event } from "../types/event";
+import { Event } from "../types/eventsUtil";
 
 export const getWorkAnniversaryMessage = (userId: string, years: number) => `🎉🎈 *Happy Work Anniversary <@${userId}>!* 🎈🎉\n🎉 Congratulations on ${years} years with us! 🎁`;
 

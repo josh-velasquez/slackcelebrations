@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-import { Event } from "../types/event";
+import { Event, EventType } from "../types/eventsUtil";
 import { createClient } from "@supabase/supabase-js";
 
 dotenv.config();
@@ -26,20 +26,6 @@ export const databaseService = {
     return data;
   },
 
-  async getEventsByUserId(userId: string): Promise<Event[]> {
-    const { data, error } = await supabase
-      .from("celebrations")
-      .select("*")
-      .eq("user_id", userId);
-
-    if (error) {
-      console.error("Error fetching events:", error);
-      throw error;
-    }
-
-    return data || [];
-  },
-
   async getAllEvents(): Promise<Event[]> {
     const { data, error } = await supabase.from("celebrations").select("*");
 
@@ -53,21 +39,21 @@ export const databaseService = {
 
   async deleteEvent(
     userId: string,
-    eventType: string,
+    eventType: EventType,
     date: string
-  ): Promise<void> {
-    const [day, month] = date.split("-").map(Number); 
-    const { error } = await supabase
-      .from("celebrations")
-      .delete()
-      .eq("user_id", userId)
-      .eq("event_type", eventType)
-      .eq("EXTRACT(DAY FROM date)", day)
-      .eq("EXTRACT(MONTH FROM date)", month);
+  ): Promise<boolean> {
+    const [month, day] = date.split("-").map(Number);
+    const { data, error } = await supabase.rpc("delete_celebration", {
+      p_user_id: userId,
+      p_event_type: eventType,
+      p_day: day,
+      p_month: month,
+    });
 
     if (error) {
-      console.error("Error deleting event:", error);
-      throw error;
+      throw `failed to delete event: ${error}`;
     }
+
+    return typeof data === 'number' && data > 0;
   },
 };
