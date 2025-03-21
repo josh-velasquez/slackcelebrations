@@ -1,5 +1,6 @@
 import SlackBolt from "@slack/bolt";
 import { initializeCommands } from "./commands";
+import { setupCronJobs } from "./services/cronService";
 
 export const setupSlackApp = () => {
   const { App } = SlackBolt;
@@ -12,6 +13,7 @@ export const setupSlackApp = () => {
   });
 
   initializeCommands(slackApp);
+  setupCronJobs(slackApp);
   return slackApp;
 };
 

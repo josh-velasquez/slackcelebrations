@@ -1,19 +1,24 @@
 import SlackBolt from "@slack/bolt";
 import { scheduleMessage } from "../services/messageService";
 import { databaseService } from "../services/databaseService";
-import { Event } from "../types/event";
+import { Event } from "../types/eventsUtil";
+
+export const getBirthdayMessage = (userId: string) => `🎉🎂 *Happy Birthday <@${userId}>!* 🎂🎉\n🎈Wishing you a fantastic day! 🎁`;
 
 export const setupBirthdayCommand = (slackApp: SlackBolt.App) => {
   slackApp.command("/birthday", async ({ command, ack }) => {
     try {
       const match = command.text.match(/<@([A-Z0-9]+)\|[^>]+>\s+(\d{2}-\d{2})/);
       if (!match) {
-        console.error("Invalid format. Expected: /birthday @user MM-DD");
+        await ack({
+          response_type: "ephemeral",
+          text: "❌ Invalid format. Expected: /custom-celebration @user MM-DD recurrence description",
+        });
         return;
       }
+      
       const userId = match[1];
       const date = match[2];
-      const message = `🎉🎂 *Happy Birthday <@${userId}>!* 🎂🎉\n🎈Wishing you a fantastic day! 🎁`;
 
       // Create event in database
       const event: Event = {
@@ -24,10 +29,17 @@ export const setupBirthdayCommand = (slackApp: SlackBolt.App) => {
       };
 
       await databaseService.createEvent(event);
-      await scheduleMessage(date, message, slackApp);
-      await ack("Your event has been registered, we will announce it on the day! 🎉");
+      await scheduleMessage(date, getBirthdayMessage(userId), slackApp);
+      await ack({
+        response_type: "ephemeral",
+        text: "✅ Your event has been registered, we will announce it on the day! 🎉"
+      });
     } catch (error) {
       console.error("Error handling message event:", error);
+      await ack({
+        response_type: "ephemeral",
+        text: "❌ An error occurred while processing your request. Please try again later."
+      });
     }
   });
 }; 
