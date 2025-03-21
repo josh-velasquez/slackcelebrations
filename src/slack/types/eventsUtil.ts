@@ -18,6 +18,14 @@ export type Block = {
   };
 };
 
+export type ScheduledMessage = {
+  id?: string;
+  channel_id: string;
+  post_at: number;
+  date_created: number;
+  text: string;
+};
+
 export const EVENT_EMOJIS: Record<EventType, string> = {
   'birthday': '🎂',
   'work-anniversary': '🎉',
@@ -46,15 +54,47 @@ export const sortEventsByDate = (events: Event[]): Event[] => {
   });
 };
 
-export const groupEventsByType = (events: Event[]): Record<EventType, Event[]> => {
-  return events.reduce((acc, event) => {
-    if (!acc[event.event_type]) {
-      acc[event.event_type] = [];
+export const groupEventsByType = (messages: ScheduledMessage[]): Record<EventType, Event[]> => {
+  return messages.reduce((acc, message) => {
+    const today = new Date()
+    const dateObj = new Date(message.post_at * 1000);
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    const formattedDate = `${month}-${day}-${today.getFullYear()}`;
+
+    const userMatch = message.text.match(/<@([A-Z0-9]+)>/);
+    const userId = userMatch ? userMatch[1] : '';
+
+    // Ensure each event type is initialized in acc before pushing
+    if (!acc.birthday) acc.birthday = [];
+    if (!acc['work-anniversary']) acc['work-anniversary'] = [];
+    if (!acc.custom) acc.custom = [];
+
+    console.log('message', message);
+
+    let eventType: EventType;
+    if (message.text.includes('birthday')) {
+      eventType = 'birthday';
+    } else if (message.text.includes('Work Anniversary')) {
+      eventType = 'work-anniversary';
+    } else {
+      eventType = 'custom';
     }
-    acc[event.event_type].push(event);
+
+    const event: Event = {
+      user_id: userId,
+      event_type: eventType,
+      recurrence: 'yearly',
+      event_date: formattedDate,
+    };
+
+    console.log('event', event);
+    acc[eventType].push(event);
+
     return acc;
   }, {} as Record<EventType, Event[]>);
 };
+
 
 export const createEventBlock = (event: Event): Block => {
   const date = formatDate(event.event_date);

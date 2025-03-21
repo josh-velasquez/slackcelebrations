@@ -7,14 +7,27 @@ import {
   groupEventsByType,
   createEventBlock,
   createEventTypeHeader,
+  ScheduledMessage,
 } from "../types/eventsUtil";
 
 export const setupEventsCommand = (slackApp: SlackBolt.App) => {
   slackApp.command("/upcoming-celebrations", async ({ ack }) => {
     try {
-      const events = await databaseService.getAllEvents();
+      const now = new Date();
+      // current day at midnight
+      const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+      const unixMidnight = Math.floor(todayMidnight.getTime() / 1000);
+      // 30 days from now at midnight
+      const futureDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 30, 0, 0, 0);
+      const unixFutureMidnight = Math.floor(futureDate.getTime() / 1000);
 
-      if (events.length === 0) {
+      const events = await slackApp.client.chat.scheduledMessages.list({
+        token: process.env.SLACK_BOT_TOKEN,
+        oldest: unixMidnight.toString(),
+        latest: unixFutureMidnight.toString(),
+      });
+
+      if (!events.scheduled_messages || events.scheduled_messages.length === 0) {
         await ack({
           response_type: "ephemeral",
           blocks: [
@@ -45,9 +58,10 @@ export const setupEventsCommand = (slackApp: SlackBolt.App) => {
         return;
       }
 
-      // Sort and group events
-      const sortedEvents = sortEventsByDate(events);
-      const groupedEvents = groupEventsByType(sortedEvents);
+      const scheduledMessages: ScheduledMessage[] = events.scheduled_messages as ScheduledMessage[];
+
+      // Group events
+      const groupedEvents = groupEventsByType(scheduledMessages);
 
       const blocks: Block[] = [
         {
@@ -62,8 +76,8 @@ export const setupEventsCommand = (slackApp: SlackBolt.App) => {
           type: "section",
           text: {
             type: "mrkdwn",
-            text: `Showing ${events.length} upcoming celebration${
-              events.length === 1 ? "" : "s"
+            text: `Showing ${events.scheduled_messages.length} upcoming celebration${
+              events.scheduled_messages.length === 1 ? "" : "s"
             }`,
           },
         },
