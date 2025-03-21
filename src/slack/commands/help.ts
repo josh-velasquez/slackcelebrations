@@ -13,6 +13,12 @@ export const setupHelpCommand = (slackApp: SlackBolt.App) => {
     → Create a custom recurring celebration for a user!  
     *Example:* \`/custom-celebration @john 09-15 yearly Hot Dog Day\` will remind everyone every year on Sept 15! 🌭  
 
+    🚫 *\`/delete-celebration [@user] [MM-DD] [event-type] [recurrence]\`*
+    → Delete a celebration and all its future occurrences. 
+
+    📅 *\`/upcoming-celebrations\`*
+    → Get a list of any upcoming celebrations.
+
     🆘 *\`/help\`*  
     → Shows this list of commands so you never forget what I can do! 🤖  
 
@@ -22,6 +28,7 @@ export const setupHelpCommand = (slackApp: SlackBolt.App) => {
        → Example: \`/birthday @UserJohn 10-10\`
     - For the \`[recurrence]\` parameter, you can use the following keywords: \`yearly, monthly, weekly, daily, once\`
     - For the \`[description]\` parameter, you can write a custom message to be displayed in the reminder\n
+    - For the \`[event-type]\` parameter, you can use the following keywords: \`birthday, work-anniversary, custom\`
 
     Let me know if you need anything else! 🚀`;
 

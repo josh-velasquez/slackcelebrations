@@ -96,17 +96,73 @@ export async function scheduleRecurringMessages(
   }
 } 
 
-export async function deleteScheduledMessages(date: string, userId: string, event_type: EventType, slackApp: SlackBolt.App, recurrence?: Recurrence) {
+export async function deleteRecurringScheduledMessages(date: string, userId: string, slackApp: SlackBolt.App, recurrence: Recurrence) {
+  try {
+    const [month, day] = date.split("-").map(Number);
+    const today = new Date();
+    const startYear = today.getFullYear();
+    const maxFutureDate = new Date(today.getTime() + 120 * 24 * 60 * 60 * 1000); // 120 days from today
+    let eventsToDelete = [];
+
+    let startDate = new Date(startYear, month - 1, day, 10); // Set the first event to delete
+    if (startDate < today) {
+      startDate.setFullYear(startYear + 1);
+    }
+
+    while (startDate <= maxFutureDate) {
+      eventsToDelete.push(new Date(startDate));
+
+      if (recurrence === "monthly") {
+        startDate.setMonth(startDate.getMonth() + 1);
+      } else if (recurrence === "weekly") {
+        startDate.setDate(startDate.getDate() + 7);
+      } else if (recurrence === "daily") {
+        startDate.setDate(startDate.getDate() + 1);
+      } else if (recurrence === "once") {
+        break;
+      }else {
+        console.error("Invalid recurrence type:", recurrence);
+        return;
+      }
+    }
+
+    console.log("Deleting recurring messages:", {
+      dates: eventsToDelete.map(d => d.toISOString()),
+      recurrence,
+      channel: process.env.SLACK_CHANNEL_ID
+    });
+
+    for (const eventDate of eventsToDelete) {
+      const formattedDate = `${(eventDate.getMonth() + 1).toString().padStart(2, "0")}-${eventDate.getDate().toString().padStart(2, "0")}`;
+      try {
+        await deleteScheduledMessages(formattedDate, userId, slackApp);
+        console.log(`Deleted message scheduled for ${eventDate.toISOString()}:`);
+      } catch (error) {
+        console.error(`Failed to delete scheduled message for ${eventDate.toISOString()}:`, error);
+        throw error;
+      }
+    }
+  } catch (error) {
+    console.error("Error in deleteRecurringScheduledMessages:", error);
+    throw error;
+  }
+}
+
+export async function deleteScheduledMessages(date: string, userId: string, slackApp: SlackBolt.App) {
   try {
     const [month, day] = date.split("-").map(Number);
     const today = new Date();
     const startYear = today.getFullYear();
     const targetDate = new Date(startYear, month - 1, day, 10,); // 10 AM on the given days
-    const targetTimestamp = Math.floor(targetDate.getTime() / 1000).toString();
+
+    const latest = (targetDate.getTime() / 1000) + 3000
+    const oldest = (targetDate.getTime() / 1000) - 3000
 
     // List all scheduled messages
     const result = await slackApp.client.chat.scheduledMessages.list({
       token: process.env.SLACK_BOT_TOKEN,
+      latest: latest.toString(),
+      oldest: oldest.toString()
     });
 
     console.log("Scheduled messages:", result);
@@ -117,19 +173,8 @@ export async function deleteScheduledMessages(date: string, userId: string, even
     }
 
     let messagesToDelete = result.scheduled_messages.filter((msg) => 
-      msg.post_at !== undefined && msg.post_at.toString() === targetTimestamp
+      msg.text?.includes(`<@${userId}>`)
     );
-
-    // If it's a custom recurring event, delete all future recurrences within 120 days
-    if (event_type === "custom" && recurrence) {
-      const maxFutureDate = new Date(today.getTime() + 120 * 24 * 60 * 60 * 1000);
-      
-      messagesToDelete = result.scheduled_messages.filter((msg) => {
-        if (msg.post_at === undefined) return false; // Ensure it's defined before using it
-        const msgDate = new Date(msg.post_at * 1000);
-        return msgDate >= targetDate && msgDate <= maxFutureDate;
-      });
-    }
 
     if (messagesToDelete.length === 0) {
       console.log("No matching scheduled messages found.");

@@ -1,5 +1,5 @@
 import SlackBolt from "@slack/bolt";
-import { deleteScheduledMessages, scheduleMessage } from "../services/messageService";
+import { deleteRecurringScheduledMessages, deleteScheduledMessages, scheduleMessage } from "../services/messageService";
 import { databaseService } from "../services/databaseService";
 import { EventType, Recurrence } from "../types/eventsUtil";
 
@@ -16,10 +16,19 @@ export const setupDeleteCelebrationCommand = (slackApp: SlackBolt.App) => {
       const eventType = match[3] as EventType;
       const recurrence = match[4] as Recurrence | undefined;
 
-      await deleteScheduledMessages(date, userId, eventType, slackApp, recurrence);
-      await ack("This event, and all future occurrences, have been deleted. 🎉");
+      if (eventType === "custom") {
+        if (!recurrence) {
+          console.error("Invalid format. Expected: /delete-celebration @user MM-DD custom reccurence");
+          return;
+        }
+        await deleteRecurringScheduledMessages(date, userId, slackApp, recurrence);
+      } else  {
+        await deleteScheduledMessages(date, userId, slackApp);
+      }
+      
+      await ack("✅ This event, and all future occurrences, have been deleted.");
     } catch (error) {
-      console.error("Error handling message event:", error);
+      console.error("❌ Error handling message event:", error);
     }
   });
 }; 
