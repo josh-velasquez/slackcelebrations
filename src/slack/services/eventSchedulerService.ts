@@ -7,7 +7,7 @@ import { getCustomCelebrationMessage } from "../commands/customCelebration";
 
 
 // 120 days from today
-const MAX_DATE_THRESHOLD = 120 * 24 * 60 * 60 * 1000;
+export const MAX_DATE_THRESHOLD = 120 * 24 * 60 * 60 * 1000;
 
 export const eventSchedulerService = {
   async scheduleUpcomingEvents(slackApp: SlackBolt.App) {
