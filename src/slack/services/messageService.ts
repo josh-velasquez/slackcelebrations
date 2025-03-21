@@ -84,7 +84,6 @@ export async function scheduleRecurringMessages(
           post_at: time,
           text: message,
         });
-        console.log(`Message scheduled for ${eventDate.toISOString()}:`, result);
       } catch (error) {
         console.error(`Failed to schedule message for ${eventDate.toISOString()}:`, error);
         throw error;
@@ -145,6 +144,38 @@ export async function deleteRecurringScheduledMessages(date: string, userId: str
   } catch (error) {
     console.error("Error in deleteRecurringScheduledMessages:", error);
     throw error;
+  }
+}
+
+// THIS WILL DELETE ALL SCHEDULED MESSAGES
+export async function deleteAllScheduledMessages(slackApp: SlackBolt.App){
+  const result = await slackApp.client.chat.scheduledMessages.list({
+    token: process.env.SLACK_BOT_TOKEN
+  });
+  
+  console.log("Scheduled messages:", result);
+
+  if(!result.scheduled_messages || result.scheduled_messages.length === 0){
+    console.log("No scheduled messages found.");
+    return
+  }
+
+  for (const msg of result.scheduled_messages) {
+    if (!msg.channel_id || !msg.id) {
+      console.warn(`Skipping message due to missing channel_id or id:`, msg);
+      continue;
+    }
+    try {
+      await slackApp.client.chat.deleteScheduledMessage({
+        token: process.env.SLACK_BOT_TOKEN,
+        channel: msg.channel_id,
+        scheduled_message_id: msg.id,
+      });
+
+      console.log(`Deleted scheduled message with ID: ${msg.id}`);
+    } catch (error) {
+      console.error(`Failed to delete message ${msg.id}:`, error);
+    }
   }
 }
 
