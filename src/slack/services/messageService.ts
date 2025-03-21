@@ -1,5 +1,5 @@
 import SlackBolt from "@slack/bolt";
-import { Recurrence } from "../types/event";
+import { EventType, Recurrence } from "../types/event";
 
 export async function scheduleMessage(date: string, message: string, slackApp: SlackBolt.App) {
   try {
@@ -91,9 +91,76 @@ export async function scheduleRecurringMessages(
       }
     }
 
-    return eventsToSchedule;
+    const result = await slackApp.client.chat.scheduledMessages.list()
+    console.log("Scheduled messages:", result);
   } catch (error) {
     console.error("Error in scheduleRecurringMessages:", error);
     throw error;
   }
 } 
+
+export async function deleteScheduledMessages(date: string, userId: string, event_type: EventType, slackApp: SlackBolt.App, recurrence?: Recurrence) {
+  try {
+    const [month, day] = date.split("-").map(Number);
+    const today = new Date();
+    const startYear = today.getFullYear();
+    const targetDate = new Date(startYear, month - 1, day, 10,); // 10 AM on the given days
+    const targetTimestamp = Math.floor(targetDate.getTime() / 1000).toString();
+
+    // List all scheduled messages
+    const result = await slackApp.client.chat.scheduledMessages.list({
+      token: process.env.SLACK_BOT_TOKEN,
+    });
+
+    if (!result.scheduled_messages || result.scheduled_messages.length === 0) {
+      console.log("No scheduled messages found.");
+      return;
+    }
+
+    let messagesToDelete = result.scheduled_messages.filter((msg) => 
+      msg.post_at !== undefined && msg.post_at.toString() === targetTimestamp
+    );
+
+    // If it's a custom recurring event, delete all future recurrences within 120 days
+    if (event_type === "custom" && recurrence) {
+      const maxFutureDate = new Date(today.getTime() + 120 * 24 * 60 * 60 * 1000);
+      
+      messagesToDelete = result.scheduled_messages.filter((msg) => {
+        if (msg.post_at === undefined) return false; // Ensure it's defined before using it
+        const msgDate = new Date(msg.post_at * 1000);
+        return msgDate >= targetDate && msgDate <= maxFutureDate;
+      });
+    }
+
+    if (messagesToDelete.length === 0) {
+      console.log("No matching scheduled messages found.");
+      return;
+    }
+
+    console.log(`Found ${messagesToDelete.length} messages to delete.`);
+
+    // Delete each scheduled message
+    for (const msg of messagesToDelete) {
+      if (!msg.channel_id || !msg.id) {
+        console.warn(`Skipping message due to missing channel_id or id:`, msg);
+        continue;
+      }
+      try {
+        await slackApp.client.chat.deleteScheduledMessage({
+          token: process.env.SLACK_BOT_TOKEN,
+          channel: msg.channel_id,
+          scheduled_message_id: msg.id,
+        });
+
+        console.log(`Deleted scheduled message with ID: ${msg.id}`);
+      } catch (error) {
+        console.error(`Failed to delete message ${msg.id}:`, error);
+      }
+    }
+
+
+  } catch (error) {
+    console.error("Error in deleteScheduledMessages:", error);
+    throw error;
+  }
+}
