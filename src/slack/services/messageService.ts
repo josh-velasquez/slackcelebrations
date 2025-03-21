@@ -1,5 +1,6 @@
 import SlackBolt from "@slack/bolt";
 import { EventType, Recurrence } from "../types/eventsUtil";
+import { MAX_DATE_THRESHOLD } from "./eventSchedulerService";
 
 export async function scheduleMessage(date: string, message: string, slackApp: SlackBolt.App) {
   try {
@@ -42,12 +43,23 @@ export async function scheduleRecurringMessages(
     const [month, day] = date.split("-").map(Number);
     const today = new Date();
     const startYear = today.getFullYear();
-    const maxFutureDate = new Date(today.getTime() + 120 * 24 * 60 * 60 * 1000); // 120 days from today
+    const maxFutureDate = new Date(today.getTime() + MAX_DATE_THRESHOLD); // 120 days from today
     let eventsToSchedule = [];
 
     let startDate = new Date(startYear, month - 1, day, 10); // Set the first event
     if (startDate < today) {
       startDate.setFullYear(startYear + 1);
+    }
+
+    // Skip the initial date since it's already handled by event creation
+    if (recurrence === "yearly") {
+      startDate.setFullYear(startDate.getFullYear() + 1);
+    } else if (recurrence === "monthly") {
+      startDate.setMonth(startDate.getMonth() + 1);
+    } else if (recurrence === "weekly") {
+      startDate.setDate(startDate.getDate() + 7);
+    } else if (recurrence === "daily") {
+      startDate.setDate(startDate.getDate() + 1);
     }
 
     while (startDate <= maxFutureDate) {
@@ -63,7 +75,7 @@ export async function scheduleRecurringMessages(
         startDate.setDate(startDate.getDate() + 1);
       } else if (recurrence === "once") {
         break;
-      }else {
+      } else {
         console.error("Invalid recurrence type:", recurrence);
         return;
       }
@@ -76,6 +88,7 @@ export async function scheduleRecurringMessages(
     });
 
     for (const eventDate of eventsToSchedule) {
+      // schedule the message to be sent at 10 AM on the given date
       const time = Math.floor(eventDate.getTime() / 1000);
       try {
         const result = await slackApp.client.chat.scheduleMessage({
@@ -100,10 +113,11 @@ export async function deleteRecurringScheduledMessages(date: string, userId: str
     const [month, day] = date.split("-").map(Number);
     const today = new Date();
     const startYear = today.getFullYear();
-    const maxFutureDate = new Date(today.getTime() + 120 * 24 * 60 * 60 * 1000); // 120 days from today
+    const maxFutureDate = new Date(today.getTime() + MAX_DATE_THRESHOLD); // 120 days from today
     let eventsToDelete = [];
 
-    let startDate = new Date(startYear, month - 1, day, 10); // Set the first event to delete
+    // Set the first event to delete
+    let startDate = new Date(startYear, month - 1, day, 10); 
     if (startDate < today) {
       startDate.setFullYear(startYear + 1);
     }

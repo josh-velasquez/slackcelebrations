@@ -7,7 +7,7 @@ import { getCustomCelebrationMessage } from "../commands/customCelebration";
 
 
 // 120 days from today
-const MAX_DATE_THRESHOLD = 120 * 24 * 60 * 60 * 1000;
+export const MAX_DATE_THRESHOLD = 120 * 24 * 60 * 60 * 1000;
 
 export const eventSchedulerService = {
   async scheduleUpcomingEvents(slackApp: SlackBolt.App) {
@@ -61,6 +61,8 @@ export const eventSchedulerService = {
           if (event.recurrence === 'once') {
             await scheduleMessage(formattedDate, message, slackApp);
           } else {
+            // For recurring events, we only need to schedule future occurrences
+            // The initial date is already handled by the event creation
             await scheduleRecurringMessages(formattedDate, message, event.recurrence, slackApp);
           }
 
