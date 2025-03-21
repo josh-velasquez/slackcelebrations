@@ -1,7 +1,7 @@
 import express from "express";
-import { mainRouter } from "./routes/index";
+import { mainRouter } from "./routes/index.js";
 import dotenv from "dotenv";
-import { setupSlackApp, startSlackApp } from "./slack/app";
+import { setupSlackApp, startSlackApp } from "./slack/app.js";
 
 dotenv.config();
 
