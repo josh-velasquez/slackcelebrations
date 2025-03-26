@@ -11,6 +11,19 @@ const supabaseKey = process.env.SUPABASE_KEY || "";
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 export const databaseService = {
+  async subscribeChannel(channelId: string): Promise<boolean> {
+    const { data, error } = await supabase
+      .from("channel_subscriptions")
+      .insert([{ channel_id: channelId }]);
+
+    if (error) {
+      console.error("Error subscribing channel:", error);
+      throw error;
+    }
+
+    return !!data;
+  },
+
   async createEvent(event: Event): Promise<Event> {
     const { data, error } = await supabase
       .from("celebrations")
@@ -54,6 +67,6 @@ export const databaseService = {
       throw `failed to delete event: ${error}`;
     }
 
-    return typeof data === 'number' && data > 0;
+    return typeof data === "number" && data > 0;
   },
 };
